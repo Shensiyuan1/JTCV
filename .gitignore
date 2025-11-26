@@ -23,6 +23,8 @@ env/
 *.h5
 
 /classify/dataset/*
+!/classify/dataset/.gitkeep
+
 data/
 
 checkpoints/
