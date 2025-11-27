@@ -22,8 +22,11 @@ env/
 *.onnx
 *.h5
 
-/classify/dataset/*
-!/classify/dataset/.gitkeep
+/Classify/dataset/*
+!/Classify/dataset/.gitkeep
+
+/Classify/Datatxt/*
+!/Classify/Datatxt/.gitkeep
 
 data/
 

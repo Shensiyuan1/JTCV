@@ -16,12 +16,12 @@ class data_classify(Dataset):
         self.input = []
         self.labels = []
 
-        if mode == 'train':
+        if mode == 'train':    #read train data dir from train.txt
             with open(self.pth+'train.txt', 'r', encoding='utf-8') as file:
                 for line in file:
                     line = line.replace('\n','')
                     self.input.append(os.path.join(line))
-            with open(self.pth+'train_label.txt', 'r', encoding='utf-8') as file:
+            with open(self.pth+'train_label.txt', 'r', encoding='utf-8') as file: #read train label from train_label.txt
                 for line in file:
                     line = line.replace('\n','')
                     self.labels.append(int(line))
@@ -64,10 +64,11 @@ class data_classify(Dataset):
 
         return img,label
 
-def data_split_classify(data_dir, output_dir, train_ratio=0.8):
+def data_split_classify(data_dir, output_dir, train_ratio=0.8, val_ratio=0.1):
+
     random.seed(42)
-    os.makedirs(output_dir, exist_ok=True)
-    classes = sorted([d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))])
+    os.makedirs(output_dir, exist_ok=True)    #create output_dir if not exist
+    classes = sorted([d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]) #get class name
 
     file_lists = {'train': [], 'val': [], 'test': []}
 
@@ -80,7 +81,7 @@ def data_split_classify(data_dir, output_dir, train_ratio=0.8):
         total = len(files)
         
         train_end = int(train_ratio * total)
-        val_end = train_end + int((1-train_ratio)/2 * total)
+        val_end = train_end + int(val_ratio * total)
 
         file_lists['train'].extend([(f, class_idx) for f in files[:train_end]])
         file_lists['val'].extend([(f, class_idx) for f in files[train_end:val_end]])
@@ -96,17 +97,16 @@ def data_split_classify(data_dir, output_dir, train_ratio=0.8):
     print("finish")
 
 
-    
 
 if __name__ == "__main__":
 
-    #data_split_classify("./dataset/animal/", "./Datatxt/")
+    data_split_classify("./dataset/mnist/", "./Datatxt/")
 
     transform = torchvision.transforms.Compose([torchvision.transforms.Resize(256),
                                                 torchvision.transforms.CenterCrop(224),
                                                 torchvision.transforms.ToTensor()])
-    dataset = data_classify(path="./Datatxt/",mode="train",transform=transform)
-    dataloader = DataLoader(dataset, batch_size=20, shuffle=True)
+    dataset = data_classify(path="./Datatxt/",mode="train",transform=None)
+    dataloader = DataLoader(dataset, batch_size=12, shuffle=True)
     for img,label in dataloader:
         print(img.shape,label.shape)
         break
