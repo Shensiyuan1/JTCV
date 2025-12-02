@@ -2,15 +2,11 @@ import torch
 import torch.nn as nn
 
 class LeNet5(nn.Module):
-    """
-    LeNet-5 经典架构的 PyTorch 实现
-    适用于 MNIST (1x28x28)
-    """
     def __init__(self, num_classes=10):
         super(LeNet5, self).__init__()
         
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1),
+            nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5, stride=1),
             nn.ReLU()
         )
         
@@ -56,6 +52,6 @@ if __name__ == '__main__':
     model = LeNet5()
     print(model)
 
-    input_tensor = torch.randn(1, 1, 28, 28) 
+    input_tensor = torch.randn(1, 3, 28, 28) 
     output = model(input_tensor)
     print(output.shape) 

@@ -3,9 +3,8 @@ import numpy as np
 from PIL import Image
 import os
 
-
-
-def csv_to_images_minst(csv_file, output_dir,count=0):
+#mnist_csv -> "https://www.kaggle.com/datasets/oddrationale/mnist-in-csv"
+def csv_to_images_mnist(csv_file, output_dir,count=0):
     os.makedirs(output_dir, exist_ok=True)
 
     df = pd.read_csv(csv_file)
@@ -34,4 +33,4 @@ def csv_to_images_minst(csv_file, output_dir,count=0):
 
 
 if __name__ == '__main__':
-    csv_to_images_minst('../dataset/mnist_test.csv','../dataset/mnist/',count=60000)
+    csv_to_images_mnist('../dataset/mnist_test.csv','../dataset/mnist/',count=60000)
