@@ -26,8 +26,12 @@ class Config:
     lr_decay_epochs = 300  
     early_stop_patience = 20  
     early_stop_delta = 0.0001
+    
+    use_grad_clip = True
+    max_grad_norm = 1.0
 
     device = 'cpu'
+    dtype = "float16"  # float16, bfloat16
     use_amp = True 
 
     loss_type = 'CrossEntropy'
@@ -36,8 +40,6 @@ class Config:
     save_dir = './exp/' + model_type + '/checkpoints/'       
     use_checkpoints = False
     
-    
-
 
 def train():
     config = Config()
@@ -53,18 +55,24 @@ def train():
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
+    print(f"Using device: {device}")
 
-    if device.type == 'cpu':
+    use_amp = config.use_amp and device.type == "cuda"
+    if device.type == "cpu" and config.use_amp:
         print("Warning: AMP is disabled because training is running on CPU.")
-        use_amp = False 
-    else:
-        use_amp = config.use_amp
 
-    if use_amp and device.type == 'cuda':
-        scaler = torch.cuda.amp.GradScaler()
+    if use_amp:
+        if config.dtype == "float16":
+            amp_dtype = torch.float16
+            scaler = torch.cuda.amp.GradScaler()
+        elif config.dtype == "bfloat16":
+            amp_dtype = torch.bfloat16
+            scaler = None          
+        else:
+            raise ValueError("config.dtype must be 'float16' or 'bfloat16'")
     else:
-        scaler = None 
-
+        amp_dtype = None
+        scaler = None
 
     model.to(device)
     print(f"Using device: {device}")
@@ -136,22 +144,28 @@ def train():
             inputs, labels = batch
             inputs, labels = inputs.to(device), labels.to(device)
 
-            with autocast(enabled=config.use_amp, dtype=torch.bfloat16):
+            with autocast(enabled=use_amp, dtype=amp_dtype):
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 loss = loss / config.accumulation_steps
 
-            if use_amp:
+            if scaler is not None:
                 scaler.scale(loss).backward()
             else:
                 loss.backward()
 
             if (step + 1) % config.accumulation_steps == 0:
-                if use_amp:
+                if config.use_grad_clip:
+                    if scaler is not None:
+                        scaler.unscale_(optimizer) 
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), config.max_grad_norm)
+
+                if scaler is not None:
                     scaler.step(optimizer)
                     scaler.update()
                 else:
                     optimizer.step()
+
                 optimizer.zero_grad()
 
             running_loss += loss.item() * config.accumulation_steps
